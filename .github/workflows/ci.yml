@@ -77,4 +77,4 @@ jobs:
         run: docker build -t fraudshield-api:ci-test -f api/Dockerfile .
 
       - name: Build Frontend Docker Image
-        run: docker build --build-arg VITE_API_URL=http://localhost:8000 -t fraudshield-frontend:ci-test -f frontend/Dockerfile .
+        run: docker build --build-arg VITE_API_URL=http://localhost:8000 -t fraudshield-frontend:ci-test -f frontend/Dockerfile ./frontend

@@ -47,8 +47,8 @@ services:
   # ── Frontend Dashboard (Nginx) ───────────────────────────────────────
   frontend:
     build:
-      context: .
-      dockerfile: frontend/Dockerfile
+      context: ./frontend
+      dockerfile: Dockerfile
       args:
         VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
     container_name: fraudshield-frontend
