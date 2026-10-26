@@ -1,0 +1,85 @@
+services:
+  # ── PostgreSQL Database ─────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: fraudshield-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-fraudshield}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fraudshield_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-fraudshield_db}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-fraudshield} -d ${POSTGRES_DB:-fraudshield_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── FastAPI Backend ──────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    container_name: fraudshield-api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://fraudshield:fraudshield_dev_password@db:5432/fraudshield_db}
+      PORT: ${PORT:-8000}
+      HOST: 0.0.0.0
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000}
+      MODEL_VERSION: ${MODEL_VERSION:-xgb-v1}
+      RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-120/minute}
+    ports:
+      - "${PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ── Frontend Dashboard (Nginx) ───────────────────────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+    container_name: fraudshield-frontend
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+
+  # ── Demo Stream Simulator (Profile: demo) ───────────────────────────
+  simulator:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    container_name: fraudshield-simulator
+    profiles:
+      - demo
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      PYTHONPATH: /app
+    command: >
+      python simulator/stream.py
+      --api-url http://api:8000
+      --data-path ${SIMULATOR_DATA_PATH:-data/sample/demo_transactions.csv}
+      --rate ${SIMULATOR_RATE:-5}
+      --duration ${SIMULATOR_DURATION:-120}
+      --fraud-boost ${SIMULATOR_FRAUD_BOOST:-0.20}
+
+volumes:
+  pgdata:
+    driver: local
