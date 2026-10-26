@@ -10,9 +10,11 @@ Usage:
 """
 from __future__ import annotations
 
+from pathlib import Path
 import pandas as pd
 
 from ml.config import (
+    DATA_DIR,
     RAW_DATA_PATH,
     TRAIN_RATIO,
     VAL_RATIO,
@@ -32,6 +34,14 @@ def load_data(path: str | None = None) -> pd.DataFrame:
         The raw DataFrame with all expected columns validated.
     """
     csv_path = path or RAW_DATA_PATH
+    if not Path(csv_path).exists():
+        # Fallback to demo sample if available (e.g. in CI or fresh clone without raw 150MB Kaggle CSV)
+        demo_sample = DATA_DIR / "sample" / "demo_transactions.csv"
+        if demo_sample.exists():
+            csv_path = demo_sample
+        else:
+            raise FileNotFoundError(f"Dataset not found at {csv_path} or fallback {demo_sample}")
+
     df = pd.read_csv(csv_path)
 
     # Basic validation
