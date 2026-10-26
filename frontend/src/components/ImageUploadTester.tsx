@@ -27,8 +27,6 @@ export const ImageUploadTester: React.FC<ImageUploadTesterProps> = ({ isOpen, on
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  if (!isOpen) return null;
-
   const reset = () => {
     setUploadState('idle');
     setPreviewUrl(null);
@@ -66,10 +64,12 @@ export const ImageUploadTester: React.FC<ImageUploadTesterProps> = ({ isOpen, on
     processFile(file);
   };
 
+  // useCallback must be declared before any conditional return (Rules of Hooks)
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setUploadState('idle');
     handleFiles(e.dataTransfer.files);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -80,6 +80,10 @@ export const ImageUploadTester: React.FC<ImageUploadTesterProps> = ({ isOpen, on
   const handleDragLeave = () => {
     if (uploadState === 'dragging') setUploadState('idle');
   };
+
+  // All hooks declared above — safe to early-return now
+  if (!isOpen) return null;
+
 
   const explanationData = (result?.explanation || []).map((exp) => ({
     feature: exp.feature,
