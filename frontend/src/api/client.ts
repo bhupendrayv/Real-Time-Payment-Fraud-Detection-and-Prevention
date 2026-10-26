@@ -80,3 +80,31 @@ export async function getDrift(): Promise<DriftResponse> {
   return handleResponse<DriftResponse>(res, '/drift');
 }
 
+export interface ImagePredictResponse extends PredictResponse {
+  ocr_available: boolean;
+  ocr_text: string | null;
+  extracted_fields: {
+    amount: number | null;
+    time_seconds: number | null;
+    card_last4: string | null;
+    merchant: string | null;
+  };
+  fields_used: { Amount: number; Time: number };
+}
+
+export async function predictFromImage(
+  file: File,
+  explain: boolean = true
+): Promise<ImagePredictResponse> {
+  const formData = new FormData();
+  formData.append('file', file);
+  const params = new URLSearchParams({ explain: explain ? 'true' : 'false' });
+  const res = await fetch(`${API_BASE_URL}/predict/from-image?${params}`, {
+    method: 'POST',
+    headers: { Accept: 'application/json' },
+    body: formData,
+  });
+  return handleResponse<ImagePredictResponse>(res, '/predict/from-image');
+}
+
+

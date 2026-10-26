@@ -9,7 +9,7 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 import numpy as np
-from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
+from fastapi import Depends, FastAPI, File, HTTPException, Query, Request, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import func
@@ -20,6 +20,7 @@ from api.db import TransactionRecord, get_db, init_db
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+from api.image_parser import OCR_AVAILABLE, parse_payment_image
 from api.model_loader import model_manager
 from api.schemas import (
     DriftResponse,
@@ -164,6 +165,108 @@ def predict(
         model_version=model_manager.model_version,
         explanation=explanations,
         latency_ms=round(latency_ms, 2),
+    )
+
+
+
+# ── Reference feature means for filling V1-V28 when not available from image ─
+_FEATURE_DEFAULTS: dict[str, float] = {
+    **{f"V{i}": 0.0 for i in range(1, 29)},
+    "Time": 43200.0,  # Noon
+    "Amount": 0.0,
+}
+
+
+class ImagePredictResponse(PredictResponse):
+    """Extended predict response that also includes OCR extraction details."""
+    ocr_available: bool = False
+    ocr_text: str | None = None
+    extracted_fields: dict[str, Any] = {}
+    fields_used: dict[str, float] = {}
+
+
+@app.post("/predict/from-image", response_model=ImagePredictResponse, tags=["Inference"])
+@limiter.limit(RATE_LIMIT_PER_MINUTE)
+async def predict_from_image(
+    request: Request,
+    file: UploadFile = File(..., description="Payment receipt or screenshot (JPEG/PNG/WEBP)"),
+    explain: bool = Query(default=True, description="Compute SHAP feature attributions"),
+    db: Session = Depends(get_db),
+) -> ImagePredictResponse:
+    """Accept a payment receipt/screenshot image, OCR-extract transaction fields, and score for fraud."""
+    # Validate file type
+    allowed_types = {"image/jpeg", "image/png", "image/webp", "image/bmp", "image/tiff"}
+    if file.content_type and file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail=f"Unsupported file type '{file.content_type}'. Upload JPEG, PNG, or WEBP.",
+        )
+
+    image_bytes = await file.read()
+    if len(image_bytes) > 10 * 1024 * 1024:  # 10 MB limit
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="Image too large. Maximum size is 10 MB.",
+        )
+
+    # Run OCR extraction
+    parse_result = parse_payment_image(image_bytes)
+    extracted = parse_result.get("extracted", {})
+
+    # Build feature dict: use extracted values where available, else defaults
+    tx_dict = dict(_FEATURE_DEFAULTS)
+    if extracted.get("amount") is not None:
+        tx_dict["Amount"] = float(extracted["amount"])
+    if extracted.get("time_seconds") is not None:
+        tx_dict["Time"] = float(extracted["time_seconds"])
+
+    tx_id = str(uuid.uuid4())
+    start_time = time.perf_counter()
+
+    try:
+        fraud_score, is_fraud, explanations = model_manager.predict(
+            tx_dict, explain=explain, top_k=5
+        )
+    except Exception as e:
+        logger.error(f"Inference error for image transaction {tx_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Inference processing failed: {str(e)}",
+        )
+
+    latency_ms = (time.perf_counter() - start_time) * 1000.0
+
+    # Persist to DB
+    try:
+        record = TransactionRecord(
+            id=tx_id,
+            created_at=datetime.datetime.now(datetime.timezone.utc),
+            features=tx_dict,
+            fraud_score=fraud_score,
+            is_fraud=is_fraud,
+            threshold=model_manager.threshold,
+            model_version=model_manager.model_version,
+            explanation=explanations,
+            latency_ms=latency_ms,
+        )
+        db.add(record)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Failed to persist image transaction {tx_id}: {e}")
+
+    return ImagePredictResponse(
+        transaction_id=tx_id,
+        fraud_score=round(fraud_score, 4),
+        is_fraud=is_fraud,
+        threshold=round(model_manager.threshold, 4),
+        model_version=model_manager.model_version,
+        explanation=explanations,
+        latency_ms=round(latency_ms, 2),
+        ocr_available=parse_result.get("ocr_available", False),
+        ocr_text=parse_result.get("ocr_text"),
+        extracted_fields=extracted,
+        fields_used={"Amount": tx_dict["Amount"], "Time": tx_dict["Time"]},
     )
 
 

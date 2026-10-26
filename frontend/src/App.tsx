@@ -13,6 +13,7 @@ import { ScoreChart } from './components/ScoreChart';
 import { TransactionTable } from './components/TransactionTable';
 import { TransactionModal } from './components/TransactionModal';
 import { ManualTester } from './components/ManualTester';
+import { ImageUploadTester } from './components/ImageUploadTester';
 import { ErrorBanner } from './components/ErrorBanner';
 
 export const App: React.FC = () => {
@@ -31,6 +32,7 @@ export const App: React.FC = () => {
   const [limit, setLimit] = useState<number>(50);
   const [selectedTx, setSelectedTx] = useState<TransactionItem | null>(null);
   const [isTesterOpen, setIsTesterOpen] = useState<boolean>(false);
+  const [isImageScannerOpen, setIsImageScannerOpen] = useState<boolean>(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const isMountedRef = useRef(true);
@@ -138,6 +140,7 @@ export const App: React.FC = () => {
         autoRefresh={autoRefresh}
         onToggleAutoRefresh={handleToggleAutoRefresh}
         onOpenTester={() => setIsTesterOpen(true)}
+        onOpenImageScanner={() => setIsImageScannerOpen(true)}
         lastUpdated={lastUpdated}
       />
 
@@ -191,6 +194,11 @@ export const App: React.FC = () => {
         isOpen={isTesterOpen}
         onClose={() => setIsTesterOpen(false)}
         onPredictionSuccess={() => { fetchData(true); fetchDrift(true); }}
+      />
+
+      <ImageUploadTester
+        isOpen={isImageScannerOpen}
+        onClose={() => setIsImageScannerOpen(false)}
       />
 
       {/* Footer */}
