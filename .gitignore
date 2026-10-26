@@ -1,0 +1,70 @@
+# Data (never commit raw data, only demo sample)
+data/*
+!data/sample/
+!data/sample/demo_transactions.csv
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+*.pyd
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.agents/
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Database & SQLite files
+*.db
+*.sqlite3
+
+# MLflow
+mlruns/
+mlruns.db
+mlartifacts/
+
+# ML artifacts: Track only small runtime models required by API, ignore exploratory/heavy checkpoints
+ml/artifacts/*
+!ml/artifacts/best_model.joblib
+!ml/artifacts/hybrid_model.joblib
+!ml/artifacts/preprocessor.joblib
+!ml/artifacts/threshold.json
+!ml/artifacts/reference_stats.json
+!ml/artifacts/lgbm_metrics.json
+!ml/artifacts/.gitkeep
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Node.js
+node_modules/
+frontend/dist/
+frontend/build/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# Docker
+docker-compose.override.yml
