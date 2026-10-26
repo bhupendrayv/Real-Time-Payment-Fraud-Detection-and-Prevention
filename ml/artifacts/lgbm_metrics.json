@@ -1,0 +1,16 @@
+{
+  "pr_auc": 0.038193483132733214,
+  "roc_auc": 0.864054050660461,
+  "precision": 0.04007123775601069,
+  "recall": 0.8035714285714286,
+  "f1": 0.07633587786259542,
+  "recall_at_0.1pct_fpr": 0.0,
+  "expected_cost": 12816.76,
+  "threshold": 0.99,
+  "tn": 41587,
+  "fp": 1078,
+  "fn": 11,
+  "tp": 45,
+  "model_name": "LightGBM (scale_pos_weight)",
+  "model_artifact": "D:\\ML Payment Fraud Detection System Project\\ml\\artifacts\\lgbm_model.joblib"
+}

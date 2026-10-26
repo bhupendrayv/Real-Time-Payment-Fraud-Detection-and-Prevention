@@ -1,0 +1,12 @@
+{
+  "threshold": 0.04447236180904523,
+  "metadata": {
+    "model_name": "XGBoost (no resampling)",
+    "avg_fraud_amount": 118.649453125,
+    "review_cost": 10.0,
+    "val_pr_auc": 0.8617878577676702,
+    "test_pr_auc": 0.751688678097354,
+    "test_f1": 0.6666666666666665,
+    "test_cost": 2632.4
+  }
+}
