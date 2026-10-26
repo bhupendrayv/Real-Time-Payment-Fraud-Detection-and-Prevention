@@ -1,0 +1,73 @@
+import type { TransactionInput } from './types';
+
+/**
+ * Sample legitimate transaction taken from typical low-risk test credit card data.
+ */
+export const SAMPLE_LEGITIMATE: TransactionInput = {
+  Time: 125000.0,
+  Amount: 42.50,
+  V1: -0.32,
+  V2: 0.88,
+  V3: 1.15,
+  V4: -0.25,
+  V5: 0.45,
+  V6: -0.12,
+  V7: 0.68,
+  V8: 0.05,
+  V9: -0.35,
+  V10: -0.28,
+  V11: -0.85,
+  V12: 0.12,
+  V13: 0.74,
+  V14: -0.18,
+  V15: 0.95,
+  V16: 0.22,
+  V17: -0.31,
+  V18: -0.05,
+  V19: 0.15,
+  V20: -0.08,
+  V21: -0.22,
+  V22: -0.55,
+  V23: 0.02,
+  V24: -0.34,
+  V25: -0.15,
+  V26: 0.25,
+  V27: 0.08,
+  V28: 0.03,
+};
+
+/**
+ * Sample fraudulent transaction derived from known high-risk test patterns (extreme V14, V12, V10, V4, V17).
+ */
+export const SAMPLE_FRAUD: TransactionInput = {
+  Time: 406.0,
+  Amount: 149.62,
+  V1: -2.31,
+  V2: 1.95,
+  V3: -1.61,
+  V4: 3.99,
+  V5: -0.52,
+  V6: -1.43,
+  V7: -2.54,
+  V8: 1.39,
+  V9: -2.77,
+  V10: -2.77,
+  V11: 3.20,
+  V12: -2.90,
+  V13: -0.60,
+  V14: -4.29,
+  V15: 0.39,
+  V16: -1.14,
+  V17: -2.83,
+  V18: -0.02,
+  V19: 0.42,
+  V20: 0.13,
+  V21: 0.52,
+  V22: -0.04,
+  V23: -0.47,
+  V24: 0.32,
+  V25: 0.04,
+  V26: 0.18,
+  V27: 0.26,
+  V28: -0.14,
+};
