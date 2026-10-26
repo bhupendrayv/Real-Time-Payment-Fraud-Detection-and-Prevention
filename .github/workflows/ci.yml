@@ -73,23 +73,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: actions/setup-buildx-action@v3
-
       - name: Build API Docker Image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: api/Dockerfile
-          push: false
-          tags: fraudshield-api:ci-test
+        run: docker build -t fraudshield-api:ci-test -f api/Dockerfile .
 
       - name: Build Frontend Docker Image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: frontend/Dockerfile
-          build-args: |
-            VITE_API_URL=http://localhost:8000
-          push: false
-          tags: fraudshield-frontend:ci-test
+        run: docker build --build-arg VITE_API_URL=http://localhost:8000 -t fraudshield-frontend:ci-test -f frontend/Dockerfile .
