@@ -183,7 +183,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                     <BarChart
                       layout="vertical"
                       data={explanationData}
-                      margin={{ top: 5, right: 30, left: 30, bottom: 5 }}
+                      margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                       <XAxis
@@ -196,7 +196,8 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                         type="category"
                         dataKey="feature"
                         stroke="#64748b"
-                        tick={{ fontSize: 11 }}
+                        tick={{ fontSize: 11, fill: '#cbd5e1' }}
+                        width={65}
                       />
                       <Tooltip
                         contentStyle={{
